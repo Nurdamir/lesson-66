@@ -1,10 +1,12 @@
 import React, {useState} from 'react';
 import {ApiDish, DishMutation} from "../../types";
+import ButtonSpinner from "../Spinner/ButtonSpinner";
 
 interface Props {
   onSubmit: (dish: ApiDish) => void;
   existingDish?: DishMutation;
   isEdit?: boolean;
+  isLoading?: boolean;
 }
 
 const initialState: DishMutation = {
@@ -12,9 +14,14 @@ const initialState: DishMutation = {
   description: '',
   image: '',
   price: '',
-}
+};
 
-const DishForm: React.FC<Props> = ({onSubmit, existingDish = initialState, isEdit = false}) => {
+const DishForm: React.FC<Props> = ({
+ onSubmit,
+ existingDish = initialState,
+ isEdit = false,
+ isLoading= false,
+}) => {
   const [dish, setDish] = useState<DishMutation>(existingDish);
 
   const onDishChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -70,7 +77,10 @@ const DishForm: React.FC<Props> = ({onSubmit, existingDish = initialState, isEdi
           onChange={onDishChange}
         />
       </div>
-      <button type="submit" className="btn btn-primary">{isEdit ? 'Update' : 'Create'}</button>
+      <button type="submit" disabled={isLoading} className="btn btn-primary">
+        {isLoading && <ButtonSpinner/>}
+        {isEdit ? 'Update' : 'Create'}
+      </button>
     </form>
   );
 };

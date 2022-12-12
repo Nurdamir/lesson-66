@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import {Dish} from "../../types";
+import {Link} from "react-router-dom";
 
 interface Props {
   dish: Dish;
@@ -26,7 +26,7 @@ const DishItem: React.FC<Props> = ({dish, onClick, onDelete}) => {
             <p className="card-text">{dish.price} KGS</p>
             <p className="d-flex gap-2">
               <button className="btn btn-success" onClick={onClick}>Add</button>
-              <Link className="btn btn-primary" to={'/edit-dish/' + dish.id} >Edit</Link>
+              <Link className="btn btn-primary" to={`/edit-dish/${dish.id}`}>Edit</Link>
               <button className="btn btn-danger" onClick={onDelete}>Delete</button>
             </p>
           </div>

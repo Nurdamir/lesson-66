@@ -6,10 +6,9 @@ import DishForm from "../../components/DishForm/DishForm";
 
 const EditDish = () => {
   const {id} = useParams();
-
   const navigate = useNavigate();
-
   const [dish, setDish] = useState<ApiDish | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const fetchOneDish = useCallback(async () => {
     const dishResponse = await axiosApi.get<ApiDish>('/dishes/' + id + '.json');
@@ -21,13 +20,19 @@ const EditDish = () => {
   }, [fetchOneDish]);
 
   const updateDish = async (dish: ApiDish) => {
-    await axiosApi.put('/dishes/' + id + '.json', dish);
-    navigate('/');
+    try {
+      setUpdating(true);
+      await axiosApi.put('/dishes/' + id + '.json', dish);
+      navigate('/');
+    } finally {
+      setUpdating(false);
+    }
+
   };
 
   const existingDish = dish && {
     ...dish,
-    price: dish.price.toString()
+    price: dish.price.toString(),
   };
 
   return (
@@ -38,6 +43,7 @@ const EditDish = () => {
             onSubmit={updateDish}
             existingDish={existingDish}
             isEdit
+            isLoading={updating}
           />
         )}
       </div>

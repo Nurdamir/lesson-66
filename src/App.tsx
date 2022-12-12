@@ -8,50 +8,73 @@ import Checkout from "./containers/Checkout/Checkout";
 import CustomerForm from "./containers/CustomerForm/CustomerForm";
 import axiosApi from "./axiosApi";
 import EditDish from "./containers/EditDish/EditDish";
+import Orders from "./containers/Orders/Orders";
+import Layout from "./components/Layout/Layout";
 
 function App() {
   const location = useLocation();
-
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [cartDishes, setCartDishes] = useState<CartDish[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const updateCart = useCallback((dishes: Dish[]) => {
+    setCartDishes(prev => {
+      const newCartDishes: CartDish[] = [];
+      prev.forEach(cartDish => {
+        const existingDish = dishes.find(dish => cartDish.dish.id === dish.id);
+        if (!existingDish) {
+          return;
+        }
+        newCartDishes.push({
+          ...cartDish,
+          dish: existingDish,
+        });
+      });
+
+      return newCartDishes;
+    });
+
+  }, []);
+
   const fetchDishes = useCallback(async () => {
     try {
-      setLoading(true); // 1
-      const dishesResponse = await axiosApi.get<ApiDishesList | null>('/dishes.json'); // 2
-      const dishes = dishesResponse.data; // 3
+      setLoading(true);
+      const dishesResponse = await axiosApi.get<ApiDishesList | null>('/dishes.json');
+      const dishes = dishesResponse.data;
 
-      if (!dishes) {
-        setDishes([]);
-        return; // 4
+      let newDishes: Dish[] = [];
+
+      if (dishes) {
+        newDishes = Object.keys(dishes).map(id => {
+          const dish = dishes[id];
+          return {
+            ...dish,
+            id
+          }
+        });
       }
 
-      const newDishes: Dish[] = Object.keys(dishes).map(id => {
-        const dish = dishes[id];
-        return {
-          ...dish,
-          id
-        };
-      }); // 5
-
-      setDishes(newDishes); // 6
+      setDishes(newDishes);
+      updateCart(newDishes);
     } finally {
-      setLoading(false); // 7
+      setLoading(false);
     }
-  }, []);
+  }, [updateCart]);
+
+  const clearCart = () => {
+    setCartDishes([]);
+  };
 
   useEffect(() => {
     if (location.pathname === '/') {
       void fetchDishes();
     }
-  }, [location, fetchDishes])
-
+  }, [location, fetchDishes]);
 
   const addDishToCart = (dish: Dish) => {
     setCartDishes(prev => {
       const existingIndex = prev.findIndex(item => {
-        return item.dish === dish;
+        return item.dish.id === dish.id;
       });
 
       if (existingIndex !== -1) {
@@ -67,37 +90,32 @@ function App() {
   };
 
   return (
-    <>
-      <header>
-        <Navbar/>
-      </header>
-      <main className="container-fluid">
-        <Routes>
-          <Route path="/" element={(
-            <Home
-              dishesLoading={loading}
-              dishes={dishes}
-              addToCart={addDishToCart}
-              cartDishes={cartDishes}
-              fetchDishes={fetchDishes}
-            />
+    <Layout>
+      <Routes>
+        <Route path="/" element={(
+          <Home
+            dishesLoading={loading}
+            dishes={dishes}
+            addToCart={addDishToCart}
+            cartDishes={cartDishes}
+            fetchDishes={fetchDishes}
+          />
+        )}/>
+        <Route path="/new-dish" element={<NewDish/>}/>
+        <Route path="/edit-dish/:id" element={<EditDish/>}/>
+        <Route path="/checkout" element={(
+          <Checkout cartDishes={cartDishes}/>
+        )}>
+          <Route path="continue" element={(
+            <CustomerForm cartDishes={cartDishes} clearCart={clearCart}/>
           )}/>
-          <Route path="/new-dish" element={<NewDish/>}/>
-          <Route path="/edit-dish/:id" element={<EditDish/>}/>
-
-          <Route path="/checkout" element={(
-            <Checkout cartDishes={cartDishes}/>
-          )}>
-            <Route path="continue" element={(
-              <CustomerForm cartDishes={cartDishes}/>
-            )}/>
-          </Route>
-          <Route path="*" element={(
-            <h1>Not found!</h1>
-          )}/>
-        </Routes>
-      </main>
-    </>
+        </Route>
+        <Route path="/orders" element={<Orders/>}/>
+        <Route path="*" element={(
+          <h1>Not found!</h1>
+        )}/>
+      </Routes>
+    </Layout>
   );
 }
 

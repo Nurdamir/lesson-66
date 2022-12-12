@@ -1,14 +1,15 @@
 import React, {useState} from 'react';
-import {CartDish, Customer, Order} from "../../types";
+import {CartDish, Customer, ApiOrder} from "../../types";
 import axiosApi from "../../axiosApi";
 import {useNavigate} from "react-router-dom";
 import Spinner from "../../components/Spinner/Spinner";
 
 interface Props {
   cartDishes: CartDish[];
+  clearCart: () => void;
 }
 
-const CustomerForm: React.FC<Props> = ({cartDishes}) => {
+const CustomerForm: React.FC<Props> = ({cartDishes, clearCart}) => {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer>({
     name: '',
@@ -30,13 +31,14 @@ const CustomerForm: React.FC<Props> = ({cartDishes}) => {
     event.preventDefault();
     setLoading(true);
 
-    const order: Order = {
+    const order: ApiOrder = {
       customer,
       dishes: cartDishes,
     };
 
     try {
       await axiosApi.post('/orders.json', order);
+      clearCart();
       navigate('/');
     } finally {
       setLoading(false);
